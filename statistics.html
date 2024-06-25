@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Statistics</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        table th {
+            background-color: #f2f2f2;
+        }
+
+        .button-container {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #ff6347; /* Red */
+            color: #fff;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+
+        .button:hover {
+            background-color: #e74c3c; /* Darker red */
+        }
+
+        .back-button {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #4CAF50; /* Green */
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .back-button:hover {
+            background-color: #45a049; /* Darker green */
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Contact Statistics</h2>
+    <a href="index.html" class="back-button">Back to Home</a>
+    <table>
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Blogger</th>
+            <th>Contacted</th>
+            <th>Action</th>
+        </tr>
+        </thead>
+        <tbody id="dataBody">
+        <!-- Data will be inserted here dynamically -->
+        </tbody>
+    </table>
+</div>
+
+<script>
+    // Function to fetch data from your endpoint
+    function fetchStatistics() {
+        fetch('http://localhost:8080/api/get/statistics')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const tableBody = document.getElementById('dataBody');
+                tableBody.innerHTML = ''; // Clear existing data
+
+                data.forEach(item => {
+                    const row = document.createElement('tr');
+
+                    // Create table cells
+                    const nameCell = document.createElement('td');
+                    nameCell.textContent = item.name;
+                    row.appendChild(nameCell);
+
+                    const phoneCell = document.createElement('td');
+                    phoneCell.textContent = item.phone;
+                    row.appendChild(phoneCell);
+
+                    const bloggerCell = document.createElement('td');
+                    bloggerCell.textContent = item.blogger;
+                    row.appendChild(bloggerCell);
+
+                    const contactedCell = document.createElement('td');
+                    contactedCell.textContent = item.contacted ? 'Yes' : 'No';
+                    row.appendChild(contactedCell);
+
+                    // Create button cell if contacted is false
+                    if (!item.contacted) {
+                        const buttonCell = document.createElement('td');
+                        const contactButton = document.createElement('button');
+                        contactButton.textContent = 'Contact';
+                        contactButton.className = 'button';
+                        contactButton.addEventListener('click', () => {
+                            // Call function to update contacted status
+                            updateContactedStatus(item.id, row, contactedCell);
+                        });
+                        buttonCell.appendChild(contactButton);
+                        row.appendChild(buttonCell);
+                    } else {
+                        const emptyCell = document.createElement('td');
+                        emptyCell.textContent = ''; // Placeholder for alignment
+                        row.appendChild(emptyCell);
+                    }
+
+                    // Append the row to the table body
+                    tableBody.appendChild(row);
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching data:', error);
+                // Display error message if needed
+            });
+    }
+
+    // Function to update contacted status via POST request
+    function updateContactedStatus(itemId, row, contactedCell) {
+        fetch(`http://localhost:8080/api/alter/contacted/${itemId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                contacted: true
+            })
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to update contacted status');
+                }
+                contactedCell.textContent = 'Yes'; // Update contacted status in UI
+                row.querySelector('.button').remove(); // Remove the contact button
+                const emptyCell = document.createElement('td');
+                emptyCell.textContent = ''; // Placeholder for alignment
+                row.appendChild(emptyCell);
+            })
+            .catch(error => {
+                console.error('Error updating contacted status:', error);
+            });
+    }
+
+    fetchStatistics();
+</script>
+</body>
+</html>

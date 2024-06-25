@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vote for Blogger</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        label {
+            display: block;
+            margin: 15px 0 5px;
+            color: #555;
+        }
+
+        input[type="text"],
+        input[type="tel"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+    <h1>Vote for Blogger</h1>
+    <form id="vote-form">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required>
+        <label for="phone">Phone Number:</label>
+        <input type="tel" id="phone" name="phone" required>
+        <!-- Hidden input to store bloggerId -->
+        <input type="hidden" id="bloggerId" name="bloggerId">
+        <button type="submit">Submit Vote</button>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Function to get query parameter by name
+        function getQueryParam(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        // Get the bloggerId from query parameters
+        const bloggerId = getQueryParam('bloggerId');
+
+        // Set the hidden input value
+        if (bloggerId) {
+            document.getElementById('bloggerId').value = bloggerId;
+        } else {
+            console.error('bloggerId is missing or invalid');
+            alert('Invalid request. Please try again.');
+            window.location.href = 'index.html'; // Redirect to index.html if bloggerId is missing
+            return;
+        }
+
+        // Handle form submission
+        document.getElementById('vote-form').addEventListener('submit', function (event) {
+            event.preventDefault();
+            const name = document.getElementById('name').value;
+            const phone = document.getElementById('phone').value;
+            const bloggerId = document.getElementById('bloggerId').value;
+
+            const formData = {
+                name: name,
+                phone: phone,
+                bloggerId: bloggerId
+            };
+
+            // Send vote to the backend
+            fetch('http://localhost:8080/api/add/vote', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    // Check if response has JSON data
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        return response.json(); // Parse JSON response
+                    } else {
+                        return {}; // Return empty object for non-JSON responses
+                    }
+                })
+                .then(data => {
+                    // Handle success response
+                    window.location.href = 'index.html'; // Redirect to index.html after successful submission
+                })
+                .catch(error => {
+                    console.error('Error submitting vote:', error);
+                    alert('Failed to submit vote.');
+                });
+        });
+    });
+</script>
+</body>
+
+</html>
